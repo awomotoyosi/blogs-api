@@ -1,38 +1,36 @@
 const joi = require("joi");
 
 const CreateBlogValidator = async (req, res, next) => {
-  
-
     try {
-            const payload = req.body;
+        const payload = req.body;
+        const schema = joi.object({
+            title: joi.string().required(),
+            description: joi.string().required(),
+            tags: joi.array().items(joi.string()).required(),
+            body: joi.string().required(),
+        });
 
-    const schema = joi.object({
-        title: joi.string().required(),
-        description: joi.string().required(),
-        tags: joi.array().required(),
-        body: joi.string().required(),
-        
-    })
+        const { error, value } = await schema.validate(payload, { abortEarly: false });
 
-    const { error, value } = await schema.validate(payload);
-
-    if (!error) {
-        next()
-    } else {
-        return res.status(400).json({
-            status: "error",
-            message: "Invalid payload",
-            error: error.details
-        })
-    }
+        if (!error) {
+            next();
+        } else {
+            return res.status(400).json({
+                status: "error",
+                message: "Invalid payload", // <--- EXACT match for test
+                errors: error.details.map(detail => detail.message)
+            });
+        }
 
     } catch (error) {
-        return res.status(400).json({
+        console.error("Error in CreateBlogValidator:", error);
+        return res.status(500).json({
             status: "error",
-            message: error.message
-        })
+            message: "Internal server error during validation.",
+            error: error.message
+        });
     }
-}
+};
 
 
 // --- NEW VALIDATOR FOR UPDATING A BLOG ---
